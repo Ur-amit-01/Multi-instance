@@ -5,7 +5,7 @@ from multiprocessing import Process
 def run_bot1():
     os.chdir("/app")
     subprocess.call(["git", "clone", "https://github.com/Ur-amit-01/File_share_2.0.git", "Normal file_store"])
-    os.chdir("Post-Manager-Bot1")
+    os.chdir("Normal file_store")
     
     # Set environment variables for bot 1
     os.environ["BOT_TOKEN"] = ""
@@ -17,7 +17,7 @@ def run_bot1():
 def run_bot2():
     os.chdir("/app")
     subprocess.call(["git", "clone", "https://github.com/Ur-amit-01/Teleshare.git", "Teleshare"])
-    os.chdir("Post-Manager-Bot2")
+    os.chdir("Teleshare")
 
     # Set environment variables for bot 2
     os.environ["BOT_TOKEN"] = ""
