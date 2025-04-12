@@ -12,7 +12,7 @@ def run_bot1():
     os.environ["DATABASE_URL"] = ""
     
     subprocess.call(["pip", "install", "-r", "requirements.txt"])
-    subprocess.call(["python", "main.py"])
+    subprocess.call(["python3", "main.py"])
 
 def run_bot2():
     os.chdir("/app")
