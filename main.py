@@ -12,20 +12,19 @@ def run_bot1():
     os.environ["DATABASE_URL"] = ""
     
     subprocess.call(["pip", "install", "-r", "requirements.txt"])
-    subprocess.call(["python", "bot.py"])
+    subprocess.call(["python", "main.py"])
 
 def run_bot2():
     os.chdir("/app")
-    subprocess.call(["git", "clone", "https://github.com/Ur-amit-01/Post-Manager.git", "Post-Manager-Bot2"])
+    subprocess.call(["git", "clone", "https://github.com/Ur-amit-01/Teleshare.git", "Teleshare"])
     os.chdir("Post-Manager-Bot2")
 
     # Set environment variables for bot 2
-    os.environ["BOT_TOKEN"] = "8113183687:AAG4EYlhk5jlSgHCobLIqjsKW_lUIseKVMs"
+    os.environ["BOT_TOKEN"] = ""
     os.environ["DATABASE_URL"] = ""
     
     subprocess.call(["pip", "install", "-r", "requirements.txt"])
-    subprocess.call(["python", "bot.py"])
-
+    subprocess.call(["python", "-m", "bot.main"])
 
     
 if __name__ == "__main__":
