@@ -6,7 +6,7 @@ import time
 # Configs
 API_ID = 22012880
 API_HASH = "5b0e07f5a96d48b704eb9850d274fe1d"
-SESSION_STRING = "your_session_string_here"  # ← Paste here
+SESSION_STRING = "BQFP49AAROLIHpH9tfjlrEewakOd-NndU3oDb9F1OJMp3cLaksypCJuuS1Qm8Bz6FjsIXzlyq1C2_Tz4gKj6vz2vZ-bElYZ8-0NLco6I74pWQOi2GQqBfvX9ls8EC3coHPY6YzfkEORGOt-i_Y05fw_UXE1NubilnLt1AOPA25gueZX-j8Jdf4c-gsA4i2qdaVjaWSNMba7F-aZ7W3KEFl3CO0KaVRqwFT9lDXEcZVc_UuYr0FG0f9qOmh7vyo-M7fr6lX7RzJjxR7AONx_9QB9rHWL3cogjbdhR9wGUoT2n7xbMKSJbtZH4L7W8H3NtaUl-svjOTmnHqQ4i11H3gsUMCbxR0QAAAAGVhUI_AA"  # Add session string if needed
 
 # AFK Data
 afk_info = {
