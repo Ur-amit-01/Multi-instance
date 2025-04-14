@@ -1,13 +1,19 @@
-
 from pyrogram import Client, filters, idle
 from pyrogram.types import Message
+from pyrogram.errors import (
+    PhoneNumberInvalid,
+    PhoneCodeInvalid,
+    PhoneCodeExpired,
+    SessionPasswordNeeded,
+    PasswordHashInvalid
+)
 import os
 import asyncio
 
 # Bot configuration
-API_ID = 22012880
-API_HASH = "5b0e07f5a96d48b704eb9850d274fe1d"
-BOT_TOKEN = "7557297602:AAH6-43MKGE0umypUgeonsfk41wOrsDKCnM"
+API_ID = 22012880  # Replace with your API_ID
+API_HASH = "5b0e07f5a96d48b704eb9850d274fe1d"  # Replace with your API_HASH
+BOT_TOKEN = "7557297602:AAH6-43MKGE0umypUgeonsfk41wOrsDKCnM"  # Replace with your bot token
 
 # Initialize the bot
 app = Client("session_generator_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
@@ -99,9 +105,14 @@ async def handle_session_generation(client: Client, message: Message):
             `1 2 3 4 5` (with spaces between numbers)
             """)
             
-        except Exception as e:
+        except PhoneNumberInvalid:
+            await message.reply("⚠️ Invalid phone number. Please start over with /generate")
             del user_sessions[user_id]
+        except Exception as e:
             await message.reply(f"⚠️ Error: {str(e)}\n\nPlease start over with /generate")
+            del user_sessions[user_id]
+            if 'temp_client' in locals():
+                await temp_client.disconnect()
     
     elif current_step == "verification_code":
         verification_code = message.text.strip().replace(" ", "")
@@ -113,39 +124,61 @@ async def handle_session_generation(client: Client, message: Message):
         phone_code_hash = user_sessions[user_id]["phone_code_hash"]
         
         try:
-            await temp_client.sign_in(
+            # Try to sign in with the verification code
+            signed_in = await temp_client.sign_in(
                 user_sessions[user_id]["phone_number"],
                 phone_code_hash,
                 verification_code
             )
             
-            # Check if 2FA is required
-            if await temp_client.is_user_authorized():
-                session_string = await temp_client.export_session_string()
-                await send_session_to_saved_messages(client, user_id, session_string)
-                await message.reply("✅ Session generated successfully! Check your Saved Messages.")
-            else:
-                user_sessions[user_id]["step"] = "password"
-                await message.reply("🔐 Please send your **2FA password**")
-                
+            # If we get here, sign in was successful
+            session_string = await temp_client.export_session_string()
+            await send_session_to_saved_messages(client, user_id, session_string)
+            await message.reply("✅ Session generated successfully! Check your Saved Messages.")
+            
+            # Clean up
+            await temp_client.disconnect()
+            del user_sessions[user_id]
+            
+        except SessionPasswordNeeded:
+            # If 2FA is required, ask for password
+            user_sessions[user_id]["step"] = "password"
+            await message.reply("""
+            🔐 Your account has 2-step verification enabled.
+            
+            Please send your **password** to continue.
+            """)
+            
+        except PhoneCodeInvalid:
+            await message.reply("⚠️ Invalid verification code. Please start over with /generate")
+            await temp_client.disconnect()
+            del user_sessions[user_id]
+        except PhoneCodeExpired:
+            await message.reply("⚠️ Verification code expired. Please start over with /generate")
+            await temp_client.disconnect()
+            del user_sessions[user_id]
         except Exception as e:
             await message.reply(f"⚠️ Error: {str(e)}\n\nPlease start over with /generate")
-            del user_sessions[user_id]
             await temp_client.disconnect()
+            del user_sessions[user_id]
     
     elif current_step == "password":
         password = message.text.strip()
         temp_client = user_sessions[user_id]["temp_client"]
         
         try:
+            # Sign in with password
             await temp_client.check_password(password)
+            
+            # Export and send the session
             session_string = await temp_client.export_session_string()
             await send_session_to_saved_messages(client, user_id, session_string)
             await message.reply("✅ Session generated successfully! Check your Saved Messages.")
             
+        except PasswordHashInvalid:
+            await message.reply("⚠️ Invalid password. Please try again or start over with /generate")
         except Exception as e:
             await message.reply(f"⚠️ Error: {str(e)}\n\nPlease start over with /generate")
-            
         finally:
             # Clean up
             if user_id in user_sessions:
