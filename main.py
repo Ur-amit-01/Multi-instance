@@ -1,58 +1,177 @@
-from pyrogram import Client, filters
-from pyrogram.types import Message
-from datetime import datetime, timedelta
-import time
 
-# Configs
+from pyrogram import Client, filters, idle
+from pyrogram.types import Message
+import os
+import asyncio
+
+# Bot configuration
 API_ID = 22012880
 API_HASH = "5b0e07f5a96d48b704eb9850d274fe1d"
-SESSION_STRING = "BQFP49AAROLIHpH9tfjlrEewakOd-NndU3oDb9F1OJMp3cLaksypCJuuS1Qm8Bz6FjsIXzlyq1C2_Tz4gKj6vz2vZ-bElYZ8-0NLco6I74pWQOi2GQqBfvX9ls8EC3coHPY6YzfkEORGOt-i_Y05fw_UXE1NubilnLt1AOPA25gueZX-j8Jdf4c-gsA4i2qdaVjaWSNMba7F-aZ7W3KEFl3CO0KaVRqwFT9lDXEcZVc_UuYr0FG0f9qOmh7vyo-M7fr6lX7RzJjxR7AONx_9QB9rHWL3cogjbdhR9wGUoT2n7xbMKSJbtZH4L7W8H3NtaUl-svjOTmnHqQ4i11H3gsUMCbxR0QAAAAGVhUI_AA"  # Add session string if needed
+BOT_TOKEN = "7557297602:AAH6-43MKGE0umypUgeonsfk41wOrsDKCnM"
 
-# AFK Data
-afk_info = {
-    "is_afk": False,
-    "reason": "I'm AFK",
-    "start_time": None,
-    "message_log": []
-}
+# Initialize the bot
+app = Client("session_generator_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
-app = Client("my_userbot", api_id=API_ID, api_hash=API_HASH, session_string=SESSION_STRING)
+# User session data storage (in memory, cleared after use)
+user_sessions = {}
 
-@app.on_message(filters.command("afk") & filters.me)
-async def activate_afk(client: Client, message: Message):
-    reason = " ".join(message.command[1:]) if len(message.command) > 1 else "I'm AFK"
-    afk_info.update({
-        "is_afk": True,
-        "reason": reason,
-        "start_time": time.time(),
-        "message_log": []
-    })
-    await message.edit(f"🚀 **AFK Mode Activated!**\n📝 Reason: {reason}")
+@app.on_message(filters.command("start") & filters.private)
+async def start(client: Client, message: Message):
+    await message.reply("""
+    **Pyrogram String Session Generator**
+    
+    Use /generate to start creating your Pyrogram string session.
+    
+    🔒 *Security Note*:
+    - This bot will never store your session permanently
+    - All data is deleted after session generation
+    - Only use this bot if you trust the source
+    """)
 
-@app.on_message(filters.command("back") & filters.me)
-async def disable_afk(client: Client, message: Message):
-    if afk_info["is_afk"]:
-        afk_duration = str(timedelta(seconds=int(time.time() - afk_info["start_time"])))
-        missed_messages = "\n".join(
-            f"- [{msg.from_user.first_name}](tg://user?id={msg.from_user.id})"
-            for msg in afk_info["message_log"]
+@app.on_message(filters.command("generate") & filters.private)
+async def generate_session(client: Client, message: Message):
+    user_id = message.from_user.id
+    user_sessions[user_id] = {"step": "api_id"}
+    
+    await message.reply("""
+    Let's generate your Pyrogram string session!
+    
+    Please send your **API_ID** (get it from https://my.telegram.org/apps)
+    """)
+
+@app.on_message(filters.private & ~filters.command(["start", "generate"]))
+async def handle_session_generation(client: Client, message: Message):
+    user_id = message.from_user.id
+    if user_id not in user_sessions:
+        return
+    
+    current_step = user_sessions[user_id].get("step")
+    
+    if current_step == "api_id":
+        try:
+            api_id = int(message.text)
+            user_sessions[user_id]["api_id"] = api_id
+            user_sessions[user_id]["step"] = "api_hash"
+            await message.reply("✅ Got your API_ID. Now please send your **API_HASH**")
+        except ValueError:
+            await message.reply("⚠️ Please send a valid numeric API_ID")
+    
+    elif current_step == "api_hash":
+        api_hash = message.text.strip()
+        if len(api_hash) < 10:  # Basic validation
+            await message.reply("⚠️ Please send a valid API_HASH")
+            return
+            
+        user_sessions[user_id]["api_hash"] = api_hash
+        user_sessions[user_id]["step"] = "phone_number"
+        await message.reply("""
+        ✅ Got your API_HASH.
+        
+        Now please send your **phone number** in international format:
+        Example: +1234567890
+        """)
+    
+    elif current_step == "phone_number":
+        phone_number = message.text.strip()
+        user_sessions[user_id]["phone_number"] = phone_number
+        
+        # Create a temporary client to generate the session
+        temp_client = Client(
+            f"user_{user_id}_session",
+            api_id=user_sessions[user_id]["api_id"],
+            api_hash=user_sessions[user_id]["api_hash"],
+            phone_number=phone_number,
+            in_memory=True
         )
-        await message.edit(
-            f"🎉 **I'm Back!**\n⏳ Was AFK for: `{afk_duration}`\n"
-            f"📨 **Missed Messages:**\n{missed_messages if missed_messages else 'None'}"
-        )
-        afk_info.update({"is_afk": False, "message_log": []})
+        
+        try:
+            await temp_client.connect()
+            sent_code = await temp_client.send_code(phone_number)
+            
+            user_sessions[user_id]["temp_client"] = temp_client
+            user_sessions[user_id]["phone_code_hash"] = sent_code.phone_code_hash
+            user_sessions[user_id]["step"] = "verification_code"
+            
+            await message.reply("""
+            ✅ Telegram should have sent you a verification code.
+            
+            Please send that code in the format:
+            `1 2 3 4 5` (with spaces between numbers)
+            """)
+            
+        except Exception as e:
+            del user_sessions[user_id]
+            await message.reply(f"⚠️ Error: {str(e)}\n\nPlease start over with /generate")
+    
+    elif current_step == "verification_code":
+        verification_code = message.text.strip().replace(" ", "")
+        if not verification_code.isdigit():
+            await message.reply("⚠️ Please send only numbers (e.g., '1 2 3 4 5')")
+            return
+            
+        temp_client = user_sessions[user_id]["temp_client"]
+        phone_code_hash = user_sessions[user_id]["phone_code_hash"]
+        
+        try:
+            await temp_client.sign_in(
+                user_sessions[user_id]["phone_number"],
+                phone_code_hash,
+                verification_code
+            )
+            
+            # Check if 2FA is required
+            if await temp_client.is_user_authorized():
+                session_string = await temp_client.export_session_string()
+                await send_session_to_saved_messages(client, user_id, session_string)
+                await message.reply("✅ Session generated successfully! Check your Saved Messages.")
+            else:
+                user_sessions[user_id]["step"] = "password"
+                await message.reply("🔐 Please send your **2FA password**")
+                
+        except Exception as e:
+            await message.reply(f"⚠️ Error: {str(e)}\n\nPlease start over with /generate")
+            del user_sessions[user_id]
+            await temp_client.disconnect()
+    
+    elif current_step == "password":
+        password = message.text.strip()
+        temp_client = user_sessions[user_id]["temp_client"]
+        
+        try:
+            await temp_client.check_password(password)
+            session_string = await temp_client.export_session_string()
+            await send_session_to_saved_messages(client, user_id, session_string)
+            await message.reply("✅ Session generated successfully! Check your Saved Messages.")
+            
+        except Exception as e:
+            await message.reply(f"⚠️ Error: {str(e)}\n\nPlease start over with /generate")
+            
+        finally:
+            # Clean up
+            if user_id in user_sessions:
+                if "temp_client" in user_sessions[user_id]:
+                    await user_sessions[user_id]["temp_client"].disconnect()
+                del user_sessions[user_id]
 
-@app.on_message((filters.private | filters.mentioned) & ~filters.me & ~filters.bot)
-async def afk_response(client: Client, message: Message):
-    if afk_info["is_afk"]:
-        afk_time = str(timedelta(seconds=int(time.time() - afk_info["start_time"])))
-        await message.reply(
-            f"⏳ **User is AFK** ({afk_time} ago)\n📝 Reason: {afk_info['reason']}",
-            quote=True
-        )
-        afk_info["message_log"].append(message)
+async def send_session_to_saved_messages(client: Client, user_id: int, session_string: str):
+    # Send the session string to user's saved messages
+    await client.send_message(
+        "me",  # This goes to the user's saved messages
+        f"""
+        **Pyrogram String Session**
+        
+        ```{session_string}```
+        
+        🔒 *Important Security Notes*:
+        1. Never share this string with anyone
+        2. If compromised, revoke it immediately at https://my.telegram.org/auth
+        3. This bot does not store your session
+        """,
+        disable_web_page_preview=True
+    )
 
 if __name__ == "__main__":
-    print("Userbot is running...")
-    app.run()
+    print("Starting session generator bot...")
+    app.start()
+    idle()
+    app.stop()
