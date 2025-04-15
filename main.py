@@ -188,7 +188,7 @@ def main():
             p = Process(target=launch_bot, args=(bot_config,))
             p.start()
             processes.append(p)
-            logger.info(f"Started {bot_config['name']} (branch: {bot_config.get('branch', 'main')})
+            logger.info(f"Started {bot_config['name']} (branch: {bot_config.get('branch', 'main')}")
             
             # Stagger launches to reduce resource contention
             if i < len(BOT_CONFIGS) - 1:
