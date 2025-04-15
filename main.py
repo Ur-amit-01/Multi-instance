@@ -1,7 +1,7 @@
 """
-Multi-Bot Launcher
-------------------
-Main launcher script using external logging configuration
+Multi-Bot Launcher with Branch Support
+--------------------------------------
+Launcher that supports deploying specific branches for each bot
 """
 
 import subprocess
@@ -18,45 +18,65 @@ ID_PATTERN = re.compile(r'^\d{5,}$')
 # Initialize main logger
 logger = setup_logger('BotLauncher')
 
-
-# ====================== BOT CONFIGS ====================== #
+# ====================== BOT CONFIGS WITH BRANCHES ====================== #
 BOT1_CONFIG = {
-    "name": "Team SAT",
+    "name": "PDF merger",
     "token": "7821967646:AAFHUS91204U6P6xqnBOdAefk42agRWzTc0",
-    "db_name": "SAT_manager",
-    "admins": "7150972327 2031106491 1519459773",
-    "session_string": "BQFP49AAn6jgY8Wwp8nhPAiF1PoD6hVxl0HWUtx8AldMjcpUOpkB0jI63t8aRNmAHQ_CWyU7CPZCiQVSOFMeL-5pLl2Z2D18R7uJx52rivl46MEe1i9aFC9gUxXRHChvUgAJWTAyytSg_BVKb8LhAKnPvNQoeV8znsy6U0wtEHY9a_lu04-fxzB5mAWZDrS12HGbkZvsocaEHgMLiGUl3q83bThYzHAciMjgzKxNiKB7VeLsyy5Ua01Ndh2uRP1KL43sp-KtF9wSw4wNV-LGtAGnMhDBG8_0Yt3zKIBk21KtM7BGsZZinxdgfs3sU53EmoAk61B8YEJ5MfAikBSRI00B8Ng4AAAAAAGVhUI_AA"  # Add session string if needed
+    "db_name": "merger",
+    "admins": "7150972327",
+    "branch": "main"  # Specify branch for this bot
 }
 
 BOT2_CONFIG = {
-    "name": "Batman",
+    "name": "Restricted content saver",
     "token": "7269356488:AAF9kq5iuNWF00Jw997PRUqxtMzNqkHI7YU",
-    "db_name": "Batman",
-    "admins": "7150972327 5753557653 2031106491 1519459773",
-    "session_string": "BQFP49AAn6jgY8Wwp8nhPAiF1PoD6hVxl0HWUtx8AldMjcpUOpkB0jI63t8aRNmAHQ_CWyU7CPZCiQVSOFMeL-5pLl2Z2D18R7uJx52rivl46MEe1i9aFC9gUxXRHChvUgAJWTAyytSg_BVKb8LhAKnPvNQoeV8znsy6U0wtEHY9a_lu04-fxzB5mAWZDrS12HGbkZvsocaEHgMLiGUl3q83bThYzHAciMjgzKxNiKB7VeLsyy5Ua01Ndh2uRP1KL43sp-KtF9wSw4wNV-LGtAGnMhDBG8_0Yt3zKIBk21KtM7BGsZZinxdgfs3sU53EmoAk61B8YEJ5MfAikBSRI00B8Ng4AAAAAAGVhUI_AA"
+    "db_name": "restricted",
+    "admins": "7150972327",
+    "session_string": "BQFP49AAn6jgY8Wwp8nhPAiF1PoD6hVxl0HWUtx8AldMjcpUOpkB0jI63t8aRNmAHQ_CWyU7CPZCiQVSOFMeL-5pLl2Z2D18R7uJx52rivl46MEe1i9aFC9gUxXRHChvUgAJWTAyytSg_BVKb8LhAKnPvNQoeV8znsy6U0wtEHY9a_lu04-fxzB5mAWZDrS12HGbkZvsocaEHgMLiGUl3q83bThYzHAciMjgzKxNiKB7VeLsyy5Ua01Ndh2uRP1KL43sp-KtF9wSw4wNV-LGtAGnMhDBG8_0Yt3zKIBk21KtM7BGsZZinxdgfs3sU53EmoAk61B8YEJ5MfAikBSRI00B8Ng4AAAAAAGVhUI_AA",
+    "branch": "dev"  # Different branch for this bot
 }
 
 BOT3_CONFIG = {
-    "name": "Harshal",
+    "name": "Request approver",
     "token": "7334882078:AAHrEbyz8YW-__QCGz8Om2JrNdvxW3NPhXE",
-    "db_name": "Harshal",
-    "admins": "7150972327 1084487776",
-    "session_string": os.environ.get("HARSHAL_SESSION_STRING", "BQFP49AAn6jgY8Wwp8nhPAiF1PoD6hVxl0HWUtx8AldMjcpUOpkB0jI63t8aRNmAHQ_CWyU7CPZCiQVSOFMeL-5pLl2Z2D18R7uJx52rivl46MEe1i9aFC9gUxXRHChvUgAJWTAyytSg_BVKb8LhAKnPvNQoeV8znsy6U0wtEHY9a_lu04-fxzB5mAWZDrS12HGbkZvsocaEHgMLiGUl3q83bThYzHAciMjgzKxNiKB7VeLsyy5Ua01Ndh2uRP1KL43sp-KtF9wSw4wNV-LGtAGnMhDBG8_0Yt3zKIBk21KtM7BGsZZinxdgfs3sU53EmoAk61B8YEJ5MfAikBSRI00B8Ng4AAAAAAGVhUI_AA")  # Example of getting from env
+    "db_name": "request",
+    "admins": "7150972327",
+    "session_string": "BQFP49AAn6jgY8Wwp8nhPAiF1PoD6hVxl0HWUtx8AldMjcpUOpkB0jI63t8aRNmAHQ_CWyU7CPZCiQVSOFMeL-5pLl2Z2D18R7uJx52rivl46MEe1i9aFC9gUxXRHChvUgAJWTAyytSg_BVKb8LhAKnPvNQoeV8znsy6U0wtEHY9a_lu04-fxzB5mAWZDrS12HGbkZvsocaEHgMLiGUl3q83bThYzHAciMjgzKxNiKB7VeLsyy5Ua01Ndh2uRP1KL43sp-KtF9wSw4wNV-LGtAGnMhDBG8_0Yt3zKIBk21KtM7BGsZZinxdgfs3sU53EmoAk61B8YEJ5MfAikBSRI00B8Ng4AAAAAAGVhUI_AA"),
+    "branch": "main"  # Feature branch for this bot
 }
 
-ACTIVE_BOTS = [BOT1_CONFIG, BOT2_CONFIG, BOT3_CONFIG]
+BOT4_CONFIG = {
+    "name": "File renamer",
+    "token": "7269356488:AAF9kq5iuNWF00Jw997PRUqxtMzNqkHI7YU",
+    "db_name": "Renamer",
+    "admins": "7150972327",
+    "branch": "main"  # Different branch for this bot
+}
 
+ACTIVE_BOTS = [BOT1_CONFIG, BOT2_CONFIG, BOT3_CONFIG, BOT4_CONFIG]
 
-# ====================== CORE FUNCTION ====================== #
+# ====================== CORE FUNCTIONS ====================== #
 
-def install_requirements():
-    """Install required packages for all bots"""
-    logger.info("Installing requirements...")
-    temp_dir = os.path.join(BASE_DIR, "temp-install")
+def clone_repo_with_branch(repo_url, target_dir, branch="main"):
+    """Clone a specific branch of the repository"""
     try:
-        os.chdir(BASE_DIR)
-        subprocess.run(["git", "clone", REPO_URL, temp_dir], check=True)
-        os.chdir(temp_dir)
+        logger.info(f"Cloning branch '{branch}' from {repo_url} to {target_dir}")
+        subprocess.run([
+            "git", "clone", 
+            "--branch", branch,
+            "--single-branch",
+            repo_url, 
+            target_dir
+        ], check=True)
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Failed to clone branch {branch}: {str(e)}")
+        raise
+
+def install_requirements(bot_dir):
+    """Install required packages for a specific bot"""
+    logger.info(f"Installing requirements in {bot_dir}")
+    try:
+        os.chdir(bot_dir)
         subprocess.run(["pip", "install", "-r", "requirements.txt"], check=True)
         logger.info("Requirements installed successfully")
     except Exception as e:
@@ -64,7 +84,6 @@ def install_requirements():
         raise
     finally:
         os.chdir(BASE_DIR)
-        subprocess.run(["rm", "-rf", temp_dir], check=True)
 
 def setup_environment_vars(bot_config):
     """Setup all environment variables for the bot"""
@@ -81,6 +100,7 @@ def setup_environment_vars(bot_config):
         
         get_logger('EnvSetup').info(
             f"Environment configured for {bot_config['name']}\n"
+            f"Branch: {bot_config.get('branch', 'main')}\n"
             f"Admins: {admin_list}\n"
             f"DB: {bot_config['db_name']}\n"
             f"Session: {'set' if bot_config.get('session_string') else 'not set'}"
@@ -91,23 +111,26 @@ def setup_environment_vars(bot_config):
         raise
 
 def launch_bot(bot_config):
-    """Launch a single bot instance"""
+    """Launch a single bot instance with specific branch"""
     bot_logger = get_logger(f"Bot.{bot_config['name']}")
-    bot_logger.info("Starting bot instance")
-    
     bot_dir = os.path.join(BASE_DIR, bot_config["name"])
+    branch = bot_config.get("branch", "main")
+    
+    bot_logger.info(f"Starting bot instance from branch '{branch}'")
     
     try:
-        # Setup bot directory
-        os.chdir(BASE_DIR)
-        subprocess.run(["git", "clone", REPO_URL, bot_dir], check=True)
-        os.chdir(bot_dir)
+        # Clone the specific branch
+        clone_repo_with_branch(REPO_URL, bot_dir, branch)
+        
+        # Install requirements for this bot
+        install_requirements(bot_dir)
         
         # Configure environment
         setup_environment_vars(bot_config)
         
         # Launch bot
         bot_logger.info("Launching bot process")
+        os.chdir(bot_dir)
         subprocess.run(["python", "bot.py"], check=True)
     except Exception as e:
         bot_logger.error(f"Bot failed: {str(e)}")
@@ -117,23 +140,22 @@ def launch_bot(bot_config):
         for var in ["ADMIN", "BOT_TOKEN", "DB_NAME", "SESSION_STRING"]:
             if var in os.environ:
                 del os.environ[var]
+        os.chdir(BASE_DIR)
 
 # ====================== MAIN ====================== #
 def main():
     """Main execution function"""
     logger.info("="*50)
-    logger.info(" MULTI-BOT LAUNCHER ".center(50, "="))
+    logger.info(" MULTI-BOT LAUNCHER WITH BRANCH SUPPORT ".center(50, "="))
     logger.info("="*50)
     
     try:
-        install_requirements()
-        
         processes = []
         for bot_config in ACTIVE_BOTS:
             p = Process(target=launch_bot, args=(bot_config,))
             p.start()
             processes.append(p)
-            logger.info(f"Started process for {bot_config['name']}")
+            logger.info(f"Started process for {bot_config['name']} (branch: {bot_config.get('branch', 'main')})")
         
         for p in processes:
             p.join()
