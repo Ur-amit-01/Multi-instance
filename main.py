@@ -45,15 +45,15 @@ BOT3_CONFIG = {
     "branch": "Acceptor"  # Feature branch for this bot
 }
 
-BOT4_CONFIG = {
-    "name": "File renamer",
-    "token": "8069066795:AAHNEYLjuWokOlI2xbG_Yqys4_OjiRg4Ay0",
-    "db_name": "Renamer",
-    "admins": "7150972327",
-    "branch": "Renamer"  # Different branch for this bot
-}
+#BOT4_CONFIG = {
+    #"name": "File renamer",
+    #"token": "8069066795:AAHNEYLjuWokOlI2xbG_Yqys4_OjiRg4Ay0",
+    #"db_name": "Renamer",
+    #"admins": "7150972327",
+    #"branch": "Renamer"  # Different branch for this bot
+#}
 
-ACTIVE_BOTS = [BOT1_CONFIG, BOT2_CONFIG, BOT3_CONFIG, BOT4_CONFIG]
+ACTIVE_BOTS = [BOT1_CONFIG, BOT2_CONFIG, BOT3_CONFIG]
 
 # ====================== CORE FUNCTIONS ====================== #
 
