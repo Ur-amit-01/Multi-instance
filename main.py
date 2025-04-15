@@ -21,36 +21,36 @@ logger = setup_logger('BotLauncher')
 # ====================== BOT CONFIGS WITH BRANCHES ====================== #
 BOT1_CONFIG = {
     "name": "PDF merger",
-    "token": "7821967646:AAFHUS91204U6P6xqnBOdAefk42agRWzTc0",
+    "token": "7610694593:AAFO8HifPDyFeiKrL7choPKqa080XnfYa38",
     "db_name": "merger",
     "admins": "7150972327",
-    "branch": "main"  # Specify branch for this bot
+    "branch": "Merger"  # Specify branch for this bot
 }
 
 BOT2_CONFIG = {
     "name": "Restricted content saver",
-    "token": "7269356488:AAF9kq5iuNWF00Jw997PRUqxtMzNqkHI7YU",
+    "token": "7604734109:AAFJIqhqzMLwcWOMLgzhiCXgp9-0EXk14FM",
     "db_name": "restricted",
     "admins": "7150972327",
     "session_string": "BQFP49AAn6jgY8Wwp8nhPAiF1PoD6hVxl0HWUtx8AldMjcpUOpkB0jI63t8aRNmAHQ_CWyU7CPZCiQVSOFMeL-5pLl2Z2D18R7uJx52rivl46MEe1i9aFC9gUxXRHChvUgAJWTAyytSg_BVKb8LhAKnPvNQoeV8znsy6U0wtEHY9a_lu04-fxzB5mAWZDrS12HGbkZvsocaEHgMLiGUl3q83bThYzHAciMjgzKxNiKB7VeLsyy5Ua01Ndh2uRP1KL43sp-KtF9wSw4wNV-LGtAGnMhDBG8_0Yt3zKIBk21KtM7BGsZZinxdgfs3sU53EmoAk61B8YEJ5MfAikBSRI00B8Ng4AAAAAAGVhUI_AA",
-    "branch": "dev"  # Different branch for this bot
+    "branch": "Restricted"  # Different branch for this bot
 }
 
 BOT3_CONFIG = {
     "name": "Request approver",
-    "token": "7334882078:AAHrEbyz8YW-__QCGz8Om2JrNdvxW3NPhXE",
+    "token": "7279071790:AAFzrFOtlOHOJVZj_9VdF1sGwrOzv8R_Z70",
     "db_name": "request",
     "admins": "7150972327",
     "session_string": "BQFP49AAn6jgY8Wwp8nhPAiF1PoD6hVxl0HWUtx8AldMjcpUOpkB0jI63t8aRNmAHQ_CWyU7CPZCiQVSOFMeL-5pLl2Z2D18R7uJx52rivl46MEe1i9aFC9gUxXRHChvUgAJWTAyytSg_BVKb8LhAKnPvNQoeV8znsy6U0wtEHY9a_lu04-fxzB5mAWZDrS12HGbkZvsocaEHgMLiGUl3q83bThYzHAciMjgzKxNiKB7VeLsyy5Ua01Ndh2uRP1KL43sp-KtF9wSw4wNV-LGtAGnMhDBG8_0Yt3zKIBk21KtM7BGsZZinxdgfs3sU53EmoAk61B8YEJ5MfAikBSRI00B8Ng4AAAAAAGVhUI_AA"),
-    "branch": "main"  # Feature branch for this bot
+    "branch": "Acceptor"  # Feature branch for this bot
 }
 
 BOT4_CONFIG = {
     "name": "File renamer",
-    "token": "7269356488:AAF9kq5iuNWF00Jw997PRUqxtMzNqkHI7YU",
+    "token": "8069066795:AAHNEYLjuWokOlI2xbG_Yqys4_OjiRg4Ay0",
     "db_name": "Renamer",
     "admins": "7150972327",
-    "branch": "main"  # Different branch for this bot
+    "branch": "Renamer"  # Different branch for this bot
 }
 
 ACTIVE_BOTS = [BOT1_CONFIG, BOT2_CONFIG, BOT3_CONFIG, BOT4_CONFIG]
