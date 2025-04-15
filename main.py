@@ -1,13 +1,12 @@
 """
-Optimized Multi-Bot Launcher with Shared Requirements
-----------------------------------------------------
-Launches multiple bots from different branches while installing requirements only once
+Multi-Bot Launcher with Branch Support
+--------------------------------------
+Launcher that supports deploying specific branches for each bot
 """
 
 import subprocess
 import os
 import re
-import time
 from multiprocessing import Process
 from logger_setup import setup_logger, get_logger
 
@@ -15,115 +14,79 @@ from logger_setup import setup_logger, get_logger
 BASE_DIR = "/app"
 REPO_URL = "https://github.com/Ur-amit-01/Hobby-project.git"
 ID_PATTERN = re.compile(r'^\d{5,}$')
-INSTALL_LOCK = False  # Global lock for requirements installation
 
 # Initialize main logger
 logger = setup_logger('BotLauncher')
 
-# ====================== BOT CONFIGS ====================== #
-BOT_CONFIGS = [
-    {
-        "name": "PDF merger",
-        "token": "7610694593:AAFO8HifPDyFeiKrL7choPKqa080XnfYa38",
-        "db_name": "merger",
-        "admins": "7150972327",
-        "branch": "Merger"
-    },
-    {
-        "name": "Restricted content saver",
-        "token": "7604734109:AAFJIqhqzMLwcWOMLgzhiCXgp9-0EXk14FM",
-        "db_name": "restricted",
-        "admins": "7150972327",
-        "session_string": "BQFP49AAn6jgY8Wwp8nhPAiF1PoD6hVxl0HWUtx8AldMjcpUOpkB0jI63t8aRNmAHQ_CWyU7CPZCiQVSOFMeL-5pLl2Z2D18R7uJx52rivl46MEe1i9aFC9gUxXRHChvUgAJWTAyytSg_BVKb8LhAKnPvNQoeV8znsy6U0wtEHY9a_lu04-fxzB5mAWZDrS12HGbkZvsocaEHgMLiGUl3q83bThYzHAciMjgzKxNiKB7VeLsyy5Ua01Ndh2uRP1KL43sp-KtF9wSw4wNV-LGtAGnMhDBG8_0Yt3zKIBk21KtM7BGsZZinxdgfs3sU53EmoAk61B8YEJ5MfAikBSRI00B8Ng4AAAAAAGVhUI_AA",
-        "branch": "Restricted"
-    },
-    {
-        "name": "Request approver",
-        "token": "7279071790:AAFzrFOtlOHOJVZj_9VdF1sGwrOzv8R_Z70",
-        "db_name": "request",
-        "admins": "7150972327",
-        "session_string": "BQFP49AAn6jgY8Wwp8nhPAiF1PoD6hVxl0HWUtx8AldMjcpUOpkB0jI63t8aRNmAHQ_CWyU7CPZCiQVSOFMeL-5pLl2Z2D18R7uJx52rivl46MEe1i9aFC9gUxXRHChvUgAJWTAyytSg_BVKb8LhAKnPvNQoeV8znsy6U0wtEHY9a_lu04-fxzB5mAWZDrS12HGbkZvsocaEHgMLiGUl3q83bThYzHAciMjgzKxNiKB7VeLsyy5Ua01Ndh2uRP1KL43sp-KtF9wSw4wNV-LGtAGnMhDBG8_0Yt3zKIBk21KtM7BGsZZinxdgfs3sU53EmoAk61B8YEJ5MfAikBSRI00B8Ng4AAAAAAGVhUI_AA",
-        "branch": "Acceptor"
-    },
-    {
-        "name": "File renamer",
-        "token": "8069066795:AAHNEYLjuWokOlI2xbG_Yqys4_OjiRg4Ay0",
-        "db_name": "Renamer",
-        "admins": "7150972327",
-        "branch": "Renamer"
-    }
-]
+# ====================== BOT CONFIGS WITH BRANCHES ====================== #
+BOT1_CONFIG = {
+    "name": "PDF merger",
+    "token": "7610694593:AAFO8HifPDyFeiKrL7choPKqa080XnfYa38",
+    "db_name": "merger",
+    "admins": "7150972327",
+    "branch": "Merger"  # Specify branch for this bot
+}
+
+BOT2_CONFIG = {
+    "name": "Restricted content saver",
+    "token": "7604734109:AAFJIqhqzMLwcWOMLgzhiCXgp9-0EXk14FM",
+    "db_name": "restricted",
+    "admins": "7150972327",
+    "session_string": "BQFP49AAn6jgY8Wwp8nhPAiF1PoD6hVxl0HWUtx8AldMjcpUOpkB0jI63t8aRNmAHQ_CWyU7CPZCiQVSOFMeL-5pLl2Z2D18R7uJx52rivl46MEe1i9aFC9gUxXRHChvUgAJWTAyytSg_BVKb8LhAKnPvNQoeV8znsy6U0wtEHY9a_lu04-fxzB5mAWZDrS12HGbkZvsocaEHgMLiGUl3q83bThYzHAciMjgzKxNiKB7VeLsyy5Ua01Ndh2uRP1KL43sp-KtF9wSw4wNV-LGtAGnMhDBG8_0Yt3zKIBk21KtM7BGsZZinxdgfs3sU53EmoAk61B8YEJ5MfAikBSRI00B8Ng4AAAAAAGVhUI_AA",
+    "branch": "Restricted"  # Different branch for this bot
+}
+
+BOT3_CONFIG = {
+    "name": "Request approver",
+    "token": "7279071790:AAFzrFOtlOHOJVZj_9VdF1sGwrOzv8R_Z70",
+    "db_name": "request",
+    "admins": "7150972327",
+    "session_string": "BQFP49AAn6jgY8Wwp8nhPAiF1PoD6hVxl0HWUtx8AldMjcpUOpkB0jI63t8aRNmAHQ_CWyU7CPZCiQVSOFMeL-5pLl2Z2D18R7uJx52rivl46MEe1i9aFC9gUxXRHChvUgAJWTAyytSg_BVKb8LhAKnPvNQoeV8znsy6U0wtEHY9a_lu04-fxzB5mAWZDrS12HGbkZvsocaEHgMLiGUl3q83bThYzHAciMjgzKxNiKB7VeLsyy5Ua01Ndh2uRP1KL43sp-KtF9wSw4wNV-LGtAGnMhDBG8_0Yt3zKIBk21KtM7BGsZZinxdgfs3sU53EmoAk61B8YEJ5MfAikBSRI00B8Ng4AAAAAAGVhUI_AA",
+    "branch": "Acceptor"  # Feature branch for this bot
+}
+
+BOT4_CONFIG = {
+    "name": "File renamer",
+    "token": "8069066795:AAHNEYLjuWokOlI2xbG_Yqys4_OjiRg4Ay0",
+    "db_name": "Renamer",
+    "admins": "7150972327",
+    "branch": "Renamer"  # Different branch for this bot
+}
+
+ACTIVE_BOTS = [BOT1_CONFIG, BOT2_CONFIG, BOT3_CONFIG, BOT4_CONFIG]
 
 # ====================== CORE FUNCTIONS ====================== #
 
-def install_shared_requirements():
-    """Install requirements once in a shared location"""
-    global INSTALL_LOCK
-    
-    # Create shared requirements directory
-    shared_dir = os.path.join(BASE_DIR, "shared_requirements")
-    os.makedirs(shared_dir, exist_ok=True)
-    
-    # Clone a temporary repo for requirements
-    temp_repo = os.path.join(shared_dir, "temp_repo")
-    if not os.path.exists(temp_repo):
-        subprocess.run([
-            "git", "clone",
-            "--depth", "1",
-            REPO_URL,
-            temp_repo
-        ], check=True)
-    
-    # Install requirements with lock to prevent concurrent installations
-    while INSTALL_LOCK:
-        time.sleep(1)
-    
-    INSTALL_LOCK = True
+def clone_repo_with_branch(repo_url, target_dir, branch="main"):
+    """Clone a specific branch of the repository"""
     try:
-        os.chdir(temp_repo)
-        if not os.path.exists(os.path.join(shared_dir, ".installed")):
-            logger.info("Installing shared requirements...")
-            subprocess.run([
-                "pip", "install",
-                "--no-cache-dir",
-                "--disable-pip-version-check",
-                "-r", "requirements.txt"
-            ], check=True)
-            # Create marker file
-            open(os.path.join(shared_dir, ".installed"), 'w').close()
-    finally:
-        INSTALL_LOCK = False
-        os.chdir(BASE_DIR)
-
-def clone_bot_repo(bot_config):
-    """Clone a specific branch for a bot"""
-    bot_dir = os.path.join(BASE_DIR, bot_config["name"])
-    branch = bot_config.get("branch", "main")
-    
-    if os.path.exists(bot_dir):
-        # Update existing clone
-        logger.info(f"Updating existing clone for {bot_config['name']}")
-        os.chdir(bot_dir)
-        subprocess.run(["git", "fetch"], check=True)
-        subprocess.run(["git", "checkout", branch], check=True)
-        subprocess.run(["git", "pull", "origin", branch], check=True)
-    else:
-        # Fresh clone
-        logger.info(f"Cloning fresh repo for {bot_config['name']}")
+        logger.info(f"Cloning branch '{branch}' from {repo_url} to {target_dir}")
         subprocess.run([
-            "git", "clone",
+            "git", "clone", 
             "--branch", branch,
             "--single-branch",
-            "--depth", "1",
-            REPO_URL,
-            bot_dir
+            repo_url, 
+            target_dir
         ], check=True)
-    
-    os.chdir(BASE_DIR)
-    return bot_dir
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Failed to clone branch {branch}: {str(e)}")
+        raise
+
+def install_requirements(bot_dir):
+    """Install required packages for a specific bot"""
+    logger.info(f"Installing requirements in {bot_dir}")
+    try:
+        os.chdir(bot_dir)
+        subprocess.run(["pip", "install", "-r", "requirements.txt"], check=True)
+        logger.info("Requirements installed successfully")
+    except Exception as e:
+        logger.error(f"Failed to install requirements: {str(e)}")
+        raise
+    finally:
+        os.chdir(BASE_DIR)
 
 def setup_environment_vars(bot_config):
-    """Setup environment variables for a bot"""
+    """Setup all environment variables for the bot"""
     try:
         # Process admin IDs
         admin_list = [int(admin) if ID_PATTERN.search(admin) else admin 
@@ -142,19 +105,27 @@ def setup_environment_vars(bot_config):
             f"DB: {bot_config['db_name']}\n"
             f"Session: {'set' if bot_config.get('session_string') else 'not set'}"
         )
+        return admin_list
     except Exception as e:
         get_logger('EnvSetup').error(f"Error setting up environment: {str(e)}")
         raise
 
 def launch_bot(bot_config):
-    """Launch a single bot instance"""
+    """Launch a single bot instance with specific branch"""
     bot_logger = get_logger(f"Bot.{bot_config['name']}")
+    bot_dir = os.path.join(BASE_DIR, bot_config["name"])
+    branch = bot_config.get("branch", "main")
+    
+    bot_logger.info(f"Starting bot instance from branch '{branch}'")
     
     try:
-        # Clone/update the bot repo
-        bot_dir = clone_bot_repo(bot_config)
+        # Clone the specific branch
+        clone_repo_with_branch(REPO_URL, bot_dir, branch)
         
-        # Setup environment
+        # Install requirements for this bot
+        install_requirements(bot_dir)
+        
+        # Configure environment
         setup_environment_vars(bot_config)
         
         # Launch bot
@@ -175,26 +146,17 @@ def launch_bot(bot_config):
 def main():
     """Main execution function"""
     logger.info("="*50)
-    logger.info(" OPTIMIZED MULTI-BOT LAUNCHER ".center(50, "="))
+    logger.info(" MULTI-BOT LAUNCHER WITH BRANCH SUPPORT ".center(50, "="))
     logger.info("="*50)
     
     try:
-        # Install shared requirements first
-        install_shared_requirements()
-        
-        # Launch bots with staggered start
         processes = []
-        for i, bot_config in enumerate(BOT_CONFIGS):
+        for bot_config in ACTIVE_BOTS:
             p = Process(target=launch_bot, args=(bot_config,))
             p.start()
             processes.append(p)
-            logger.info(f"Started {bot_config['name']} (branch: {bot_config.get('branch', 'main')}")
-            
-            # Stagger launches to reduce resource contention
-            if i < len(BOT_CONFIGS) - 1:
-                time.sleep(10)
+            logger.info(f"Started process for {bot_config['name']} (branch: {bot_config.get('branch', 'main')})")
         
-        # Wait for all processes to complete
         for p in processes:
             p.join()
             
